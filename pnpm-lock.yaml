@@ -30,7 +30,7 @@ importers:
         specifier: 15.3.2
         version: 15.3.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       next-auth:
-        specifier: ^5.0.0-beta.28
+        specifier: 5.0.0-beta.29
         version: 5.0.0-beta.29(next@15.3.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
       prisma:
         specifier: ^6.8.2
