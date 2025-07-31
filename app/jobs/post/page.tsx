@@ -7,8 +7,6 @@ import { useRouter } from "next/navigation";
 export default function PostJobPage() {
   const router = useRouter();
 
-  console.log(router)
-
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
