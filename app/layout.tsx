@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import SessionProvider from "@/components/SessionProvider";
 import { auth } from "@/auth";
+import { AntdRegistry } from "@ant-design/nextjs-registry";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,7 +36,9 @@ export default async function RootLayout({
         <SessionProvider session={session}>
           <div className="min-h-screen bg-gray-50">
             <Navbar />
-            <main className="container mx-auto px-4 py-8">{children}</main>
+            <main className="container mx-auto px-4 py-8">
+              <AntdRegistry>{children}</AntdRegistry>
+            </main>
           </div>
         </SessionProvider>
       </body>

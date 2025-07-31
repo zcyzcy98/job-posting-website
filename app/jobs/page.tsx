@@ -1,69 +1,91 @@
 "use client";
 import Link from "next/link";
 import { getPosts } from "../actions/post.action";
-import PostSearchBar from "@/components/Post/SearchBar";
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { Button, Input, Select } from "antd";
 
 type Jobs = Awaited<ReturnType<typeof getPosts>>;
 type Job = Jobs[number];
 
 export default function JobsPage() {
-  const [jobs, setJobs] = useState<Jobs>([]);
+  const options = [
+    {
+      label: "All Types",
+      value: "",
+    },
+    {
+      label: "Full-time",
+      value: "Full-time",
+    },
+    {
+      label: "Part-time",
+      value: "Part-time",
+    },
+  ];
 
-  const fetchJobs = async (data: any = {}) => {
-    const jobs = await getPosts(data);
-    setJobs(jobs);
-  };
+  const [query, setQuery] = useState("");
+  const [location, setLocation] = useState("");
+  const [type, setType] = useState("");
+
+  const [jobs, setJobs] = useState<Jobs>([]);
 
   useEffect(() => {
     fetchJobs();
   }, []);
 
-  const handleSearch = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const fetchJobs = async (data: object = {}) => {
+    const jobs = await getPosts(data);
+    setJobs(jobs);
+  };
 
-    const formData = new FormData(e.currentTarget);
-    const data = {
-      query: formData.get("query"),
-      location: formData.get("location"),
-      type: formData.get("type"),
+  const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+  };
+
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocation(e.target.value);
+  };
+
+  const handleTypeChange = (value: string) => {
+    setType(value);
+  };
+
+  const handleSearch = () => {
+    const params = {
+      query,
+      location,
+      type,
     };
-    fetchJobs(data);
+    fetchJobs(params);
   };
 
   return (
     <div className="space-y-8">
       <div className="bg-white p-6 rounded-lg shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Find Jobs</h1>
-        <form className="grid gap-4 md:grid-cols-3" onSubmit={handleSearch}>
-          <input
-            type="text"
-            name="query"
+        <form className="grid gap-4 md:grid-cols-3">
+          <Input
+            value={query}
+            onChange={handleQueryChange}
             placeholder="Search jobs..."
-            className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
           />
-          <select
-            name="type"
-            className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
-          >
-            <option value="">All Types</option>
-            <option value="Full-time">Full-time</option>
-            <option value="Part-time">Part-time</option>
-            <option value="Contract">Contract</option>
-            <option value="Internship">Internship</option>
-          </select>
-          <input
-            type="text"
-            name="location"
+          <Select
+            value={type}
+            options={options}
+            onChange={handleTypeChange}
+          ></Select>
+          <Input
+            value={location}
+            onChange={handleLocationChange}
             placeholder="Location"
-            className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
           />
-          <button
-            type="submit"
+          <Button
+            type="primary"
+            onClick={handleSearch}
             className="md:col-span-3 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
           >
             Search
-          </button>
+          </Button>
         </form>
       </div>
 
