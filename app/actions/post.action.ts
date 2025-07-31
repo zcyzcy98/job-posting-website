@@ -26,3 +26,15 @@ export async function createPost(data: any) {
     return new NextResponse("Internal server error", { status: 500 });
   }
 }
+
+export async function getPosts() {
+  const jobs = await prisma.job.findMany({
+    orderBy: {
+      postedAt: "desc",
+    },
+    include: {
+      postedBy: true,
+    },
+  });
+  return JSON.parse(JSON.stringify(jobs));
+}
