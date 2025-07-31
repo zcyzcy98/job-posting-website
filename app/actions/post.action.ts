@@ -27,8 +27,18 @@ export async function createPost(data: any) {
   }
 }
 
-export async function getPosts() {
+export async function getPosts(data: any = {}) {
+  const { title, location, type } = data;
   const jobs = await prisma.job.findMany({
+    where: {
+      AND: [
+        title ? { title: { contains: title, mode: "insensitive" } } : {},
+        location
+          ? { location: { contains: location, mode: "insensitive" } }
+          : {},
+        type ? { type: { contains: type, mode: "insensitive" } } : {},
+      ],
+    },
     orderBy: {
       postedAt: "desc",
     },
