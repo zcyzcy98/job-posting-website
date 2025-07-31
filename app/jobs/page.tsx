@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { getPosts } from "../actions/post.action";
+import { getPosts } from "@/app/actions/post.action";
 import { useEffect, useState } from "react";
 import { Button, Input, Select } from "antd";
 

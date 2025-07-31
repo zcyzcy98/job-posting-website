@@ -56,3 +56,15 @@ export async function getPosts(data: any = {}) {
   });
   return JSON.parse(JSON.stringify(jobs));
 }
+
+export async function getPostById(id: string) {
+  const job = await prisma.job.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      postedBy: true,
+    },
+  });
+  return JSON.parse(JSON.stringify(job));
+}
