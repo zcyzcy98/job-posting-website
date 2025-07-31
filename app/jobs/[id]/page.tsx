@@ -2,13 +2,23 @@ import React from "react";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { getPostById } from "@/app/actions/post.action";
+import { notFound } from "next/navigation";
 
 // import ApplyButton from "./ApplyButton";
 type Job = Awaited<ReturnType<typeof getPostById>>;
 
 export default async function JobPage({ params }: { params: { id: string } }) {
-  console.log(params);
-  const job: Job = await getPostById(params.id);
+  let job: Job | undefined = undefined;
+  try {
+    const { id } = await params;
+    job = await getPostById(id);
+    if (!job) {
+      notFound();
+    }
+  } catch (error) {
+    console.log(error);
+    notFound();
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
