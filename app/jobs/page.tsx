@@ -24,7 +24,7 @@ export default function JobsPage() {
 
     const formData = new FormData(e.currentTarget);
     const data = {
-      title: formData.get("title"),
+      query: formData.get("query"),
       location: formData.get("location"),
       type: formData.get("type"),
     };
@@ -38,7 +38,7 @@ export default function JobsPage() {
         <form className="grid gap-4 md:grid-cols-3" onSubmit={handleSearch}>
           <input
             type="text"
-            name="title"
+            name="query"
             placeholder="Search jobs..."
             className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
           />
