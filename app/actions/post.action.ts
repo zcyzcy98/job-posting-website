@@ -84,6 +84,7 @@ export async function updatePostById(data: any) {
         type,
         salary,
         description,
+        postedAt: new Date(),
       },
     });
     revalidatePath("/jobs");
