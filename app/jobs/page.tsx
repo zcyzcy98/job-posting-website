@@ -1,8 +1,9 @@
 "use client";
-import Link from "next/link";
 import { getPosts } from "@/app/actions/post.action";
+import { getDbUserId } from "@/app/actions/user.action";
 import { useEffect, useState } from "react";
 import { Button, Input, Select } from "antd";
+import { useRouter } from "next/navigation";
 
 type Jobs = Awaited<ReturnType<typeof getPosts>>;
 type Job = Jobs[number];
@@ -22,20 +23,27 @@ export default function JobsPage() {
       value: "Part-time",
     },
   ];
-
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState("");
   const [type, setType] = useState("");
 
   const [jobs, setJobs] = useState<Jobs>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>("");
 
   useEffect(() => {
     fetchJobs();
+    getCurrentUser();
   }, []);
 
   const fetchJobs = async (data: object = {}) => {
     const jobs = await getPosts(data);
     setJobs(jobs);
+  };
+
+  const getCurrentUser = async () => {
+    const currentUserId = await getDbUserId();
+    setCurrentUserId(currentUserId);
   };
 
   const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,6 +65,14 @@ export default function JobsPage() {
       type,
     };
     fetchJobs(params);
+  };
+
+  const handleDetail = (id: string) => {
+    router.push(`/jobs/${id}`);
+  };
+
+  const handleEdit = (id: string) => {
+    router.push(`/jobs/${id}/edit`);
   };
 
   return (
@@ -119,12 +135,17 @@ export default function JobsPage() {
               <span className="text-sm text-gray-500">
                 Posted by {job.postedBy.name}
               </span>
-              <Link
-                href={`/jobs/${job.id}`}
-                className="text-indigo-600 hover:text-indigo-700 font-medium"
-              >
-                View Details →
-              </Link>
+              <div className="flex gap-2">
+                <Button onClick={() => handleDetail(job.id)} type="primary">
+                  详情 →
+                </Button>
+                {/* 判断是否是当前用户 */}
+                {currentUserId === job.postedBy.id && (
+                  <Button onClick={() => handleEdit(job.id)} type="primary">
+                    编辑 →
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         ))}
