@@ -5,6 +5,7 @@ import { getPostById, updatePostById } from "@/app/actions/post.action";
 import { notFound, useRouter } from "next/navigation";
 import { Button, Form, Input, Select } from "antd";
 import TextArea from "antd/es/input/TextArea";
+import BackButton from "@/components/BackButton";
 
 // import ApplyButton from "./ApplyButton";
 type Job = Awaited<ReturnType<typeof getPostById>>;
@@ -68,9 +69,7 @@ export default function JobPage({ params }: { params: { id: string } }) {
     <div className="max-w-4xl mx-auto">
       <div className="bg-white rounded-lg shadow-sm p-8">
         <div className="mb-8">
-          <Button onClick={() => router.back()} type="primary" className="mb-4">
-            ← Back to Jobs
-          </Button>
+          <BackButton title="← Back to Jobs" />
 
           <Form style={{ maxWidth: 600 }} scrollToFirstError form={form}>
             <Form.Item
