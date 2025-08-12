@@ -3,8 +3,9 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirect, RedirectType } from "next/navigation";
 import { NextResponse } from "next/server";
+import toast from "react-hot-toast";
 
 export async function createPost(data: any) {
   data = JSON.parse(JSON.stringify(data));
@@ -91,5 +92,51 @@ export async function updatePostById(data: any) {
     return JSON.parse(JSON.stringify(job));
   } catch (err) {
     console.error(err);
+  }
+}
+
+export async function applyPost(jobId: string) {
+  try {
+    const session = await auth();
+    if (!session?.user || !session.user.id) {
+      return redirect("/auth/signin", RedirectType.push);
+    }
+
+    const job = await prisma.job.findUnique({
+      where: { id: jobId },
+    });
+
+    if (!job) {
+      return {
+        success: false,
+        error: "Job not found",
+        code: 404,
+      };
+    }
+
+    const existingApplication = await prisma.application.findFirst({
+      where: {
+        jobId,
+        userId: session.user.id,
+      },
+    });
+    if (existingApplication) {
+      return {
+        success: false,
+        error: "You already have applied for this job",
+        code: 400,
+      };
+    }
+
+    const application = await prisma.application.create({
+      data: {
+        jobId,
+        userId: session.user.id,
+        status: "PENDING",
+      },
+    });
+    return JSON.parse(JSON.stringify(application));
+  } catch (err) {
+    toast.error("Failed to apply for the job");
   }
 }
