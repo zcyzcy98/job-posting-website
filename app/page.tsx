@@ -1,133 +1,183 @@
-"use client";
+import React from "react";
+import { formatDistanceToNow } from "date-fns";
+import { getPostById } from "@/app/actions/post.action";
+import { redirect } from "next/navigation";
 import Link from "next/link";
-import { getPosts } from "@/app/actions/post.action";
-import { useEffect, useState } from "react";
-import { Button, Input, Select } from "antd";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 
-type Jobs = Awaited<ReturnType<typeof getPosts>>;
-type Job = Jobs[number];
+// import ApplyButton from "./ApplyButton";
+type Job = Awaited<ReturnType<typeof getPostById>>;
 
-export default function JobsPage() {
-  const options = [
-    {
-      label: "All Types",
-      value: "",
-    },
-    {
-      label: "Full-time",
-      value: "Full-time",
-    },
-    {
-      label: "Part-time",
-      value: "Part-time",
-    },
-  ];
+export default async function JobPage({ params }: { params: { id: string } }) {
+  const session = await auth();
 
-  const [query, setQuery] = useState("");
-  const [location, setLocation] = useState("");
-  const [type, setType] = useState("");
+  if (!session?.user?.id) {
+    redirect("/auth/signin");
+  }
 
-  const [jobs, setJobs] = useState<Jobs>([]);
+  const [applications, postedJobs] = await Promise.all([
+    // Applications query
+    prisma.application.findMany({
+      where: {
+        userId: session.user.id,
+      },
+      include: {
+        job: {
+          include: {
+            postedBy: true,
+          },
+        },
+      },
+      orderBy: {
+        appliedAt: "desc",
+      },
+    }),
 
-  useEffect(() => {
-    fetchJobs();
-  }, []);
-
-  const fetchJobs = async (data: object = {}) => {
-    const jobs = await getPosts(data);
-    setJobs(jobs);
-  };
-
-  const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(e.target.value);
-  };
-
-  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocation(e.target.value);
-  };
-
-  const handleTypeChange = (value: string) => {
-    setType(value);
-  };
-
-  const handleSearch = () => {
-    const params = {
-      query,
-      location,
-      type,
-    };
-    fetchJobs(params);
-  };
+    //Jobs query
+    prisma.job.findMany({
+      where: {
+        postedById: session.user.id,
+      },
+      include: {
+        _count: {
+          select: {
+            applications: true,
+          },
+        },
+      },
+      orderBy: {
+        postedAt: "desc",
+      },
+    }),
+  ]);
 
   return (
-    <div className="space-y-8">
-      <div className="bg-white p-6 rounded-lg shadow-sm">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Find Jobs</h1>
-        <form className="grid gap-4 md:grid-cols-3">
-          <Input
-            value={query}
-            onChange={handleQueryChange}
-            placeholder="Search jobs..."
-          />
-          <Select
-            value={type}
-            options={options}
-            onChange={handleTypeChange}
-          ></Select>
-          <Input
-            value={location}
-            onChange={handleLocationChange}
-            placeholder="Location"
-          />
-          <Button
-            type="primary"
-            onClick={handleSearch}
-            className="md:col-span-3 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
-          >
-            Search
-          </Button>
-        </form>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <h1 className="text-2xl font-bold text-gray-900 mb-8">Dashboard</h1>
 
-      <div className="grid gap-6">
-        {jobs.map((job: Job) => (
-          <div
-            key={job.id}
-            className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  {job.title}
-                </h2>
-                <p className="text-gray-600 mb-2">{job.company}</p>
-                <div className="flex items-center text-sm text-gray-500 mb-4">
-                  <span className="mr-4">{job.location}</span>
-                  <span>{job.type}</span>
-                </div>
-                <p className="text-gray-600 mb-4 line-clamp-2">
-                  {job.description}
-                </p>
-              </div>
-              {job.salary && (
-                <span className="text-lg font-semibold text-gray-900">
-                  {job.salary}
-                </span>
-              )}
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500">
-                Posted by {job.postedBy.name}
-              </span>
-              <Link
-                href={`/jobs/${job.id}`}
-                className="text-indigo-600 hover:text-indigo-700 font-medium"
-              >
-                View Details →
-              </Link>
-            </div>
+      <div className="grid gap-8 md:grid-cols-2">
+        {/* Posted Jobs Section */}
+        <div>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-gray-900">Posted Jobs</h2>
+            <Link
+              href="/jobs/post"
+              className="text-indigo-600 hover:text-indigo-700 font-medium"
+            >
+              Post New Job
+            </Link>
           </div>
-        ))}
+
+          <div className="bg-white rounded-lg shadow-sm divide-y divide-gray-200">
+            {postedJobs.length === 0 ? (
+              <p className="p-6 text-gray-500 text-center">
+                You haven't posted any jobs yet.
+              </p>
+            ) : (
+              postedJobs.map((job) => (
+                <div key={job.id} className="p-6">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-1">
+                        {job.title}
+                      </h3>
+                      <p className="text-gray-600 mb-2">{job.company}</p>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <span>{job.location}</span>
+                        <span className="mx-2">•</span>
+                        <span>{job.type}</span>
+                        <span className="mx-2">•</span>
+                        <span>
+                          {formatDistanceToNow(new Date(job.postedAt), {
+                            addSuffix: true,
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                        {job._count.applications} applications
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex justify-end space-x-4">
+                    <Link
+                      href={`/jobs/${job.id}`}
+                      className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+                    >
+                      View Job
+                    </Link>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Applications Section */}
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">
+            Your Applications
+          </h2>
+
+          <div className="bg-white rounded-lg shadow-sm divide-y divide-gray-200">
+            {applications.length === 0 ? (
+              <p className="p-6 text-gray-500 text-center">
+                You haven't applied to any jobs yet.
+              </p>
+            ) : (
+              applications.map((application) => (
+                <div key={application.id} className="p-6">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-1">
+                        {application.job.title}
+                      </h3>
+                      <p className="text-gray-600 mb-2">
+                        {application.job.company}
+                      </p>
+                      <div className="flex items-center text-sm text-gray-500">
+                        <span>{application.job.location}</span>
+                        <span className="mx-2">•</span>
+                        <span>{application.job.type}</span>
+                        <span className="mx-2">•</span>
+                        <span>
+                          Applied{" "}
+                          {formatDistanceToNow(
+                            new Date(application.appliedAt),
+                            {
+                              addSuffix: true,
+                            }
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        application.status === "PENDING"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : application.status === "ACCEPTED"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {application.status}
+                    </span>
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <Link
+                      href={`/jobs/${application.job.id}`}
+                      className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+                    >
+                      View Job
+                    </Link>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
