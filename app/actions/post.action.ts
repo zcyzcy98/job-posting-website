@@ -135,7 +135,11 @@ export async function applyPost(jobId: string) {
         status: "PENDING",
       },
     });
-    return JSON.parse(JSON.stringify(application));
+    return {
+      data: JSON.parse(JSON.stringify(application)),
+      success: true,
+      code: 200,
+    };
   } catch (err) {
     toast.error("Failed to apply for the job");
   }
